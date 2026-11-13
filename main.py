@@ -9,14 +9,19 @@ It maintains an audit log of previous evaluations and provides actionable feedba
 """
 
 """
-ADVANCED TECHNIQUE DOCUMENTATION:
+Advanced Techniques Documentation:
 1. Dataclass Factory Initialization: Utilizing `field(default_factory=list)` 
 ensures mutable default objects (lists) are safely instantiated per session state.
+
 2. Variadic Argument Unpacking: Using `*contents` in helper functions to 
 accept an arbitrary number of positional component arguments dynamically.
+
 3. Type-Hinted Complex Structures: Utilizing nested generic type hints 
 (`tuple[int, str, list[tuple[str, bool]]]`) for strict type safety.
+
 """
+
+# Setting up the Drafter framework for release with a custom website style, title, and metadata.
 set_website_style("yorha")
 set_website_title("PassGuard")
 set_site_information(
@@ -28,7 +33,8 @@ set_site_information(
 )
 set_website_favicon("")
 set_page_transition("fade")
-set_page_transition("black", 0.3)
+#hide_debug_information()
+set_website_framed(False)
 
 @dataclass
 class PasswordRecord:
@@ -102,7 +108,7 @@ def styled_page_container(*contents) -> PageContent:
 # returning both score and checks for modularity and testability.
 
 # This function evaluates the password length and returns a score and a list of checks.
-def evaluate_length_rules(password: str) -> tuple[int, list[tuple[str, bool]]]:
+def eval_length_rules(password: str) -> tuple[int, list[tuple[str, bool]]]:
     """
         This function evaluates the password length and returns a score and 
         a list of checks that evaluated to True for the password.
@@ -134,7 +140,7 @@ def evaluate_length_rules(password: str) -> tuple[int, list[tuple[str, bool]]]:
         
     return score, checks
 
-def evaluate_variety_rules(password: str) -> tuple[int, list[tuple[str, bool]]]:
+def eval_variety_rules(password: str) -> tuple[int, list[tuple[str, bool]]]:
     """
             This function evaluates the password variety and returns a score and 
             a list of checks that evaluated to True for the password.
@@ -175,7 +181,7 @@ def evaluate_variety_rules(password: str) -> tuple[int, list[tuple[str, bool]]]:
         
     return score, checks
 
-def evaluate_modifiers(password: str, is_strict: bool, category: str) -> tuple[int, list[tuple[str, bool]]]:
+def eval_modifiers(password: str, is_strict: bool, category: str) -> tuple[int, list[tuple[str, bool]]]:
     """
             Helper function to apply strict mode and category-specific rules.
             
@@ -225,7 +231,7 @@ def evaluate_modifiers(password: str, is_strict: bool, category: str) -> tuple[i
 
     return score_modifier, checks
 
-def evaluate_password(password: str, is_strict: bool, category: str) -> tuple[int, str, list[tuple[str, bool]]]:
+def eval_password(password: str, is_strict: bool, category: str) -> tuple[int, str, list[tuple[str, bool]]]:
     """
         This main evaluation function coordinates helper decomposition to 
         compute the final password score, rating label, and rule checks.
@@ -241,9 +247,9 @@ def evaluate_password(password: str, is_strict: bool, category: str) -> tuple[in
         return 0, "Empty", []
 
     # Decomposed modular function calls
-    len_score, len_checks = evaluate_length_rules(password)
-    var_score, var_checks = evaluate_variety_rules(password)
-    mod_score, mod_checks = evaluate_modifiers(password, is_strict, category)
+    len_score, len_checks = eval_length_rules(password)
+    var_score, var_checks = eval_variety_rules(password)
+    mod_score, mod_checks = eval_modifiers(password, is_strict, category)
 
     # Aggregate scores and checks from all evaluation aspects
     total_score = max(0, min(100, len_score + var_score + mod_score))
@@ -280,11 +286,13 @@ def mask_password(password: str) -> str:
 # ROUTES
 # ==========================================
 
-# Route 1: Action route for submitting password analysis
+# Route 1: Button action route for submitting password analysis
+# This route is triggered when the user submits a password for evaluation. 
+# It uses state binding to maintain the current application state and records the evaluation in the history.
 @route
 def submit_analysis(state: State, current_password: str, is_strict: bool, active_category: str) -> Page:
     """Action triggered when evaluating the password using state binding."""
-    score, label, checks = evaluate_password(current_password, is_strict, active_category)
+    score, label, checks = eval_password(current_password, is_strict, active_category)
     masked = mask_password(current_password)
 
     # Each password evaluation is recorded in the history with a PasswordRecord dataclass instance.
@@ -293,7 +301,7 @@ def submit_analysis(state: State, current_password: str, is_strict: bool, active
     
     return results(state)
 
-# Route 2: Home page
+# Route 2: Home page where users can navigate to different sections of the application.
 @route("/")
 def index(state: State) -> Page:
     """Home page route displaying the welcome hub and navigation links."""
@@ -309,7 +317,7 @@ def index(state: State) -> Page:
     
     return Page(state, [home_content])
 
-# Route 3: Analyzer page
+# Route 3: Analyzer page where users can input their password and select options for evaluation.
 @route("/analyzer")
 def analyzer(state: State) -> Page:
     """Analyzer page containing input fields (TextBox, CheckBox, SelectBox)."""
@@ -334,13 +342,14 @@ def analyzer(state: State) -> Page:
     
     return Page(state, [analyzer_content])
 
-# Route 4: Results page
+# Route 4: Results page where users can view the evaluation breakdown of their password, i
+# ncluding score, rating label, and checks with visual indicators.
 @route("/results")
 def results(state: State) -> Page:
     """Results page displaying the evaluation breakdown with checkmarks/crosses."""
     latest = state.history[-1] if state.history else PasswordRecord("****", 0, "No Analysis", [])
     
-    # Prepare a display list of checks with visual indicators (checkmarks and crosses) for user-friendly feedback.
+    # Preparing a display list of checks with visual indicators (checkmarks and crosses) for user-friendly feedback.
     check_display_list = []
     for rule, passed in latest.checks:
         if passed:
@@ -364,7 +373,8 @@ def results(state: State) -> Page:
     
     return Page(state, [results_content])
 
-# Route 5: History page
+# Route 5: History page where users can view a log of their previous password evaluations, 
+# including masked passwords, scores, and rating labels.
 @route("/history")
 def history(state: State) -> Page:
     """History audit log page."""
@@ -387,7 +397,7 @@ def history(state: State) -> Page:
     
     return Page(state, [history_content])
 
-# Route 6: Tips page
+# Route 6: Tips page where users can access security guidelines and best practices for creating strong passwords.
 @route("/tips")
 def tips(state: State) -> Page:
     """Tips page providing security guidelines."""
@@ -400,13 +410,13 @@ def tips(state: State) -> Page:
     )
     return Page(state, [tips_content])
 
-# Route 7: About page
+# Route 7: About page where users can learn about the application architecture, purpose, and development details.
 @route("/about")
 def about(state: State) -> Page:
     """About page explaining the application architecture and purpose."""
     about_content = styled_page_container(
         Header("About PassGuard", 2),
-        Paragraph("PassGuard This application evaluates password strength based on length, character variety, "
+        Paragraph("PassGuard evaluates password strength based on length, character variety, "
         "and category-specific rules. It maintains an audit log of previous evaluations and " \
         "provides actionable feedback to users."),
         LineBreak(),
@@ -438,7 +448,7 @@ assert_equal(
 
 # Unit test for the evaluate_password function with a sample password
 assert_equal(
-    evaluate_password("Secret123!", False, "Personal"),
+    eval_password("Secret123!", False, "Personal"),
     (
         70,
         "Strong",
@@ -669,8 +679,8 @@ assert_equal(
             styled_page_container(
                 Header("About PassGuard", 2),
                 Paragraph(
-                    "PassGuard is engineered using the Drafter framework and Python dataclasses "
-                    "to provide real-time cryptographic strength assessment and session-based audit logging."
+                    "PassGuard evaluates password strength based on length, character variety, and category-specific rules. " \
+                    "It maintains an audit log of previous evaluations and provides actionable feedback to users."
                 ),
                 LineBreak(),
                 Button("Back to Home", index),
@@ -678,8 +688,6 @@ assert_equal(
         ],
     ),
 )   
-
-
 
 # Start the server with initial state instance
 start_server(State(), open_browser = False)
