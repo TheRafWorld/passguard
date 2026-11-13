@@ -23,8 +23,8 @@ set_site_information(
     author = "Rafael Gibrial",
     description = "An interactive security tool to evaluate credential strength and maintain audit logs.",
     sources = "CICS106 Course Materials",
-    planning = "PassGuard Project Plan",
-    links = ""
+    planning = ["CS1 Final Project 0_ Pick a Problem.docx", "CS1 Final Project 1_ Design.docx"],
+    links = "https://drafter-edu.github.io/drafter/reference/index.html"
 )
 set_website_favicon("")
 set_page_transition("fade")
@@ -327,8 +327,6 @@ def analyzer(state: State) -> Page:
             LineBreak(),
             SelectBox("active_category", ["Personal", "Corporate", "Government"], label="Security Standard"),
         ),
-
-        
         Button("Analyze Strength", submit_analysis),
         LineBreak(),
         Button("Back to Home", index)
@@ -408,7 +406,9 @@ def about(state: State) -> Page:
     """About page explaining the application architecture and purpose."""
     about_content = styled_page_container(
         Header("About PassGuard", 2),
-        Paragraph("PassGuard is engineered using the Drafter framework and Python dataclasses to provide real-time cryptographic strength assessment and session-based audit logging."),
+        Paragraph("PassGuard This application evaluates password strength based on length, character variety, "
+        "and category-specific rules. It maintains an audit log of previous evaluations and " \
+        "provides actionable feedback to users."),
         LineBreak(),
         Button("Back to Home", index)
     )
@@ -441,12 +441,13 @@ assert_equal(
     evaluate_password("Secret123!", False, "Personal"),
     (
         70,
-        "Moderate",
+        "Strong",
         [
             ("Length: 8+ characters", True),
             ("Length: 12+ characters (+40 pts)", False),
             ("Contains uppercase & lowercase letters", True),
-            ("Contains numbers", True)
+            ("Contains numbers", True),
+            ("Personal Standard: 10+ characters & symbols", True)
         ]
     )
 )
@@ -463,11 +464,12 @@ assert_equal(
     Page(
         State(
             current_password="",
-            history=[PasswordRecord("Secr******", 70, "Moderate", [
+            history=[PasswordRecord("Secr******", 70, "Strong", [
                 ("Length: 8+ characters", True),
                 ("Length: 12+ characters (+40 pts)", False),
                 ("Contains uppercase & lowercase letters", True),
-                ("Contains numbers", True)
+                ("Contains numbers", True),
+                ("Personal Standard: 10+ characters & symbols", True)
             ])],
             is_strict = False,
             active_category = "Personal"
@@ -475,9 +477,8 @@ assert_equal(
         [
             styled_page_container(
                 Header("Results", 2),
-                Header("Score: 70 / 100 (Moderate)", 3),
+                Header("Score: 70 / 100 (Strong)", 3),
                 Paragraph("Evaluated Password: Secr******"),
-                LineBreak(),
                 Header("Condition Breakdown", 4),
                 BulletedList([
                     "✅ Length: 8+ characters",
@@ -531,14 +532,21 @@ assert_equal(
             current_password="",
             history=[],
             is_strict=False,
-            active_category="Personal"
+            active_category="Personal",
         ),
         [
             styled_page_container(
                 Header("Password Analyzer", 2),
                 Span(
+                    "Enter your password below to evaluate its strength based on length, character variety, and category-specific rules.",
+                    LineBreak(),
                     TextBox("current_password", label="Enter Password"),
+                    LineBreak(),
                     CheckBox("is_strict", label="Enforce Strict Mode"),
+                    "Enable strict mode to require symbols in your password, which may affect the score.",
+                    LineBreak(),
+                    "Choose a security standard below to evaluate your password against category-specific rules.",
+                    LineBreak(),
                     SelectBox("active_category", ["Personal", "Corporate", "Government"], label="Security Standard"),
                 ),
                 Button("Analyze Strength", submit_analysis),
@@ -551,7 +559,7 @@ assert_equal(
 
 # Unit test for the results route to ensure correct page rendering and state management
 assert_equal(
-    results(State(history=[PasswordRecord("Secr******", 70, "Moderate", [
+    results(State(history=[PasswordRecord("Secr******", 70, "Strong", [
         ("Length: 8+ characters", True),
         ("Length: 12+ characters (+40 pts)", False),
         ("Contains uppercase & lowercase letters", True),
@@ -560,7 +568,7 @@ assert_equal(
     Page(
         State(
             current_password="",
-            history=[PasswordRecord("Secr******", 70, "Moderate", [
+            history=[PasswordRecord("Secr******", 70, "Strong", [
                 ("Length: 8+ characters", True),
                 ("Length: 12+ characters (+40 pts)", False),
                 ("Contains uppercase & lowercase letters", True),
@@ -572,9 +580,8 @@ assert_equal(
         [
             styled_page_container(
                 Header("Results", 2),
-                Header("Score: 70 / 100 (Moderate)", 3),
+                Header("Score: 70 / 100 (Strong)", 3),
                 Paragraph("Evaluated Password: Secr******"),
-                LineBreak(),
                 Header("Condition Breakdown", 4),
                 BulletedList([
                     "✅ Length: 8+ characters",
@@ -595,7 +602,7 @@ assert_equal(
 
 # Unit test for the history route to ensure correct page rendering and state management
 assert_equal(
-    history(State(history=[PasswordRecord("Secr******", 70, "Moderate", [
+    history(State(history=[PasswordRecord("Secr******", 70, "Strong", [
         ("Length: 8+ characters", True),
         ("Length: 12+ characters (+40 pts)", False),
         ("Contains uppercase & lowercase letters", True),
@@ -604,7 +611,7 @@ assert_equal(
     Page(
         State(
             current_password="",
-            history=[PasswordRecord("Secr******", 70, "Moderate", [
+            history=[PasswordRecord("Secr******", 70, "Strong", [
                 ("Length: 8+ characters", True),
                 ("Length: 12+ characters (+40 pts)", False),
                 ("Contains uppercase & lowercase letters", True),
@@ -617,7 +624,7 @@ assert_equal(
             styled_page_container(
                 Header("Audit History", 2),
                 BulletedList([
-                    "Password: Secr****** | Score: 70 (Moderate)"
+                    "Password: Secr****** | Score: 70 (Strong)"
                 ]),
                 LineBreak(),
                 Button("Return Home", index),
@@ -671,6 +678,8 @@ assert_equal(
         ],
     ),
 )   
+
+
 
 # Start the server with initial state instance
 start_server(State(), open_browser = False)
