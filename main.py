@@ -28,12 +28,12 @@ set_site_information(
     author = "Rafael Gibrial",
     description = "An interactive security tool to evaluate credential strength and maintain audit logs.",
     sources = "CICS106 Course Materials",
-    planning = ["CS1 Final Project 0_ Pick a Problem.docx", "CS1 Final Project 1_ Design.docx"],
+    planning = ["CS1 Final Project 0_ Pick a Problem.pdf", "CS1 Final Project 1_ Design.pdf","Final Project Mock Up.pdf"],
     links = "https://drafter-edu.github.io/drafter/reference/index.html"
 )
 set_website_favicon("")
 set_page_transition("fade")
-#hide_debug_information()
+hide_debug_information()
 set_website_framed(False)
 
 @dataclass
